@@ -10,9 +10,6 @@ import os
 absolutepath = os.path.abspath(__file__)
 
 fileDirectory = r"{}".format(os.path.dirname(absolutepath))
-print("path :{}".format(fileDirectory))
-# HAY UN BUG LA SEGUNDA VEZ QUE UNO ENTRA A EDITAR TRAMITES NO SE BORRA LOS TRAMITES VACIOS
-
 
 raiz=Tk()
 raiz.config(bg="#60ABFD")
@@ -23,10 +20,8 @@ raiz.geometry("1200x600")
 
 #Info de tramites
 tramites = {}
-
 listaEntryTramites =[]
 listaEntryMontos =[]
-
 listaTramites =[]
 
 
@@ -34,16 +29,15 @@ listaTramites =[]
 
 
 def borrarTXT(enlace):
-    f = open (enlace,'w')
-    f.write("")
-    f.close()
+    with open (enlace,'w') as archivo:
+        archivo.write("")
 def escribirTexto(nombreTramite,monto,enlace):
-    f = open (enlace,'a')
-    f.write("\n{}\n{}".format(nombreTramite,monto))
-    f.close()
+    with open (enlace,'a') as archivo:
+        archivo.write("\n{}\n{}".format(nombreTramite,monto))
+        archivo.close()
 def almacenarBD():
-    with open (fileDirectory + r'\BDTramites.txt') as file_object:
-        save = file_object.readlines()        
+    with open (fileDirectory + r'\BDTramites.txt') as archivo:
+        save = archivo.readlines()        
         for i in range(1,len(save),2):            
             tramites[save[i].strip("\n")]=save[i+1].strip("\n")
    
@@ -51,7 +45,6 @@ almacenarBD()
 
 #---------------------------Crear Pdf--------------------------------------
 class PDF(FPDF):
-    pass
     def logo (self, name, x, y, w, h):
         self.image(name, x, y, w, h)
 
@@ -89,25 +82,26 @@ def creadorDePDF(nombre,apellido,tipoDeTramite,tramitesElegidos,textoCom):
     borrarTXT(urlTXT)
     #Escribo El inicio
     now = datetime.now()
-
-    f = open (urlTXT,'a')
-    f.write("                                                                                                              {}/{}/{}".format(now.day,now.month, now.year))
-    f.write("\nTrámite: {}".format(tipoDeTramite))
-    f.write("\nPresupuesto para: {} {}\n\n".format(nombre, apellido))
-    f.close()
+    try:
+        archivo = open (urlTXT, 'a')
+        archivo.write(f"\t\t\t {now.day}/{now.month}/{now.year}".rjust(140))                                                                                                             
+        archivo.write("\nTrámite: {}".format(tipoDeTramite))
+        archivo.write("\nPresupuesto para: {} {}\n\n".format(nombre, apellido))
+    finally:
+        archivo.close()
     
     def escribirTex(nombreTramite,monto):
-        f = open (fileDirectory + r'\TramitesImprimir.txt',"a")
-        f.write("{}:        \t${}\n".format(nombreTramite,monto))
-        f.close()
+        with open (urlTXT,"a") as archivo:
+            archivo.write("{}:        \t${}\n".format(nombreTramite,monto))
     for i in tramitesElegidos:
         escribirTex(i,tramites[i])
         contTotal += int(tramites[i])
     escribirTex("\n\n\nPrecio Total: ",contTotal)
     
-    f = open (fileDirectory + r'\TramitesImprimir.txt',"a")
-    f.write("\nNotas:{}".format(textoCom))
-    f.close()
+    def escribirNotas():
+        with open (fileDirectory + r'\TramitesImprimir.txt',"a") as archivo:
+            archivo.write("\nNotas:{}".format(textoCom))
+    escribirNotas()
     
     # Creo el PDF
     pdf= PDF()
